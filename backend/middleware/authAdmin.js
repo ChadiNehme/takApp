@@ -11,7 +11,7 @@ const authAdmin = async (req, res, next) => {
 
     try {
         const paload = jwt.verify(Atoken, process.env.JWT_SECRET)
-        req.user = { userId: paload.userId, name: paload.name }
+        req.admin = { adminId: paload.adminId, name: paload.name }
         next()
     } catch (error) {
         console.log(error.message);

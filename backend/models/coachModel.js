@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
-
+import bcrypt from 'bcrypt'
+import jwt from 'jsonwebtoken'
 const coachSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
@@ -14,13 +15,13 @@ const coachSchema = new mongoose.Schema({
   approved: { type: Boolean, default: false },
   fees: { type: Number, required: true },
   adminMessage: { type: String },
-  slots_booked: [
-    {
-      date: Date,
-      time: String,
-      user: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
-    }
-  ],
+  // slots_booked: [
+  //   {
+  //     date: Date,
+  //     time: String,
+  //     user: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+  //   }
+  // ],
   course: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Course',
@@ -33,6 +34,23 @@ const coachSchema = new mongoose.Schema({
     }
   ]
 }, { timestamps: true, minimize: false });
+
+
+coachSchema.pre('save', async function () {
+  const salt = await bcrypt.genSalt(10)
+  this.password = await bcrypt.hash(this.password, salt)
+
+})
+
+coachSchema.methods.CreateJWT = function () {
+    return jwt.sign({ coachId: this._id, name: this.name }, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_LIFETIME
+    })
+}
+coachSchema.methods.comparePassword = async function (pwd) {
+    const isMatch = await bcrypt.compare(pwd, this.password)
+    return isMatch
+}
 
 const coachModel = mongoose.model("Coach", coachSchema);
 export default coachModel;
